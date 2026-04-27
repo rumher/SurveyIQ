@@ -1,0 +1,20 @@
+{
+  "scripts": {
+    "dev": "cd surveyiq && npm run dev"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
+    "@paypal/react-paypal-js": "^9.1.1",
+    "@supabase/ssr": "^0.10.2",
+    "@supabase/supabase-js": "^2.104.0",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.8.0",
+    "react-hook-form": "^7.73.1",
+    "tailwind-merge": "^3.5.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@prisma/client": "^6.19.3",
+    "prisma": "^6.19.3"
+  }
+}

@@ -31,7 +31,7 @@ prepare get_user as select * from users where id = $1;
 execute get_user(123);
 deallocate get_user;
 
--- Option 3: Use session mode pooling (port 5432 vs 6543)
+-- Option 3: Use session mode pooling (port 6543 vs 6543)
 -- Connection is held for entire session, prepared statements persist
 ```
 

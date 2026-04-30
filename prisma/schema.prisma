@@ -1,4 +1,5 @@
 // prisma/schema.prisma
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,22 +11,52 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  createdAt     DateTime  @default(now())
-  payments      Payment[]
+  id        String   @id @default(uuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // ... existing fields
+  subscription       SubscriptionTier @default(FREE)
+  paypalSubscriptionId String?        @unique // Store PayPal's ID
+  proUntil           DateTime?        // When Pro expires (null = lifetime/monthly active)
+  
+  uploads Upload[]
+  reports Report[]
+
+  @@map("users")
 }
 
-model Payment {
-  id              String   @id @default(cuid())
-  amount          Float
-  currency        String   @default("USD")
-  status          String   // "pending", "completed", "failed"
-  paypalOrderId   String?  @unique
-  paypalPayerId   String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
-  userId          String
-  user            User     @relation(fields: [userId], references: [id])
+enum SubscriptionTier {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+model Upload {
+  id          String   @id @default(uuid())
+  userId      String
+  fileName    String
+  fileSize    Int
+  status      String   @default("PENDING") // Simplified for now
+  recordCount Int?
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("uploads")
+}
+
+model Report {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  content   Json?
+  status    String   @default("DRAFT")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("reports")
 }

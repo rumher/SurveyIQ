@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
 
     // 4. Save Metadata to Database (Prisma)
     const uploadRecord = await prisma.upload.create({
-       {
+      data: {
         userId: user.id,
         fileName: file.name, // Original name for display
         fileSize: file.size,
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ 
       message: 'Upload successful', 
-       uploadRecord 
+      uploadRecord 
     }, { status: 201 })
 
   } catch (error) {

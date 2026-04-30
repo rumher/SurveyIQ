@@ -1,0 +1,17 @@
+{
+  "node": {
+    "003948a58f43551050ecaaedbf3fdde11f00d85545": {
+      "workers": {
+        "app/dashboard/validate/page": {
+          "moduleId": 21111,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_0",
+          "filename": "src/components/layout/Navbar.tsx"
+        }
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_0",
+      "filename": "src/components/layout/Navbar.tsx"
+    }
+  },
+  "edge": {}
+}

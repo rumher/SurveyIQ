@@ -19,7 +19,6 @@ export async function POST(req: NextRequest) {
       data: {
         id,
         email,
-        full_name,
         subscription: 'FREE',
       },
     })

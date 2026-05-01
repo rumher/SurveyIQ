@@ -6,7 +6,7 @@ const prisma = new PrismaClient()
 
 export async function POST(req: NextRequest) {
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
     
     // 1. Check Authentication
     const { data: { user } } = await supabase.auth.getUser()

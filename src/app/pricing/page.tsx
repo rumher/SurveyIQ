@@ -1,15 +1,11 @@
+// src/app/pricing/page.tsx
 import { createClient } from '@/lib/supabase/server';
-import { redirect } from 'next/navigation';
-import PayPalSubscribeButton from '@/components/pricing/PayPalSubscribeButton';
-import Link from 'next/link';
+import SubscribeButton from '@/components/pricing/SubscribeButton';
 
 export default async function PricingPage() {
+  // Optional: Check session on server just to show/hide "Login" hints
   const supabase = await createClient();
-  const { data } = await supabase.auth.getSession();
-  const session = data?.session;
-
-  // 🔐 PayPal Plan ID from env (only required for Pro Beta)
-  const planId = process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID;
+  const { data: { session } } = await supabase.auth.getSession(); // ✅ Fixed destructuring
 
   return (
     <div className="min-h-screen bg-gray-50 py-20 px-4">
@@ -22,7 +18,8 @@ export default async function PricingPage() {
         </p>
 
         <div className="grid md:grid-cols-3 gap-8">
-          {/* Free Plan */}
+          
+          {/* Starter Plan */}
           <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
             <h3 className="text-xl font-bold text-gray-900">Starter</h3>
             <p className="text-4xl font-bold my-4">$0<span className="text-lg text-gray-500">/mo</span></p>
@@ -31,15 +28,12 @@ export default async function PricingPage() {
               <li>✓ Basic Validation</li>
               <li>✓ Community Support</li>
             </ul>
-            <Link 
-              href="/dashboard" 
-              className="block w-full text-center bg-gray-100 text-gray-900 font-bold py-3 rounded-lg hover:bg-gray-200 transition"
-            >
+            <button className="w-full py-3 bg-gray-100 text-gray-800 font-bold rounded-lg cursor-default hover:bg-gray-200 transition">
               Current Plan
-            </Link>
+            </button>
           </div>
 
-          {/* Pro Plan - MOST POPULAR */}
+          {/* Pro Plan (The one with the button) */}
           <div className="bg-[#0F1F38] text-white p-8 rounded-xl shadow-xl border-2 border-teal-bright relative transform scale-105">
             <div className="absolute top-0 right-0 bg-amber-500 text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg">
               MOST POPULAR
@@ -53,25 +47,9 @@ export default async function PricingPage() {
               <li>✓ PDF Reports</li>
             </ul>
             
-            {session ? (
-              planId ? (
-                <PayPalSubscribeButton 
-                  userId={session.user.id} 
-                  planId={planId} 
-                />
-              ) : (
-                <div className="text-center text-amber-300 text-sm py-2">
-                  ⚠️ Subscription config pending
-                </div>
-              )
-            ) : (
-              <Link 
-                href="/login?redirect=/pricing" 
-                className="block w-full text-center bg-amber-500 text-white font-bold py-3 rounded-lg hover:bg-amber-600 transition"
-              >
-                Login to Subscribe
-              </Link>
-            )}
+            {/* INTEGRATION HERE - SubscribeButton handles auth internally */}
+            <SubscribeButton planName="Pro Beta" price="$49" />
+            
           </div>
 
           {/* Enterprise Plan */}
@@ -90,6 +68,7 @@ export default async function PricingPage() {
               Contact Sales
             </a>
           </div>
+
         </div>
       </div>
     </div>

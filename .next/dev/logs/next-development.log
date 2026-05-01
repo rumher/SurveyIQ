@@ -1,3 +1,1 @@
-{"timestamp":"00:00:06.221","source":"Server","level":"WARN","message":"⚠ Slow filesystem detected. The benchmark took 460ms. If C:\\Projects\\SurveyIQ\\.next/dev is a network drive, consider moving it to a local folder.\nSee more: https://nextjs.org/docs/app/guides/local-development"}
-{"timestamp":"00:00:07.694","source":"Server","level":"WARN","message":"⚠ The \"middleware\" file convention is deprecated. Please use \"proxy\" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy"}
-{"timestamp":"00:00:09.172","source":"Server","level":"LOG","message":""}
+{"timestamp":"00:00:02.759","source":"Server","level":"LOG","message":""}

@@ -25,7 +25,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="p-8">
-      <h1 className="text-3xl font-bold text-gray-900">Welcome back, {user.full_name || "User"}!</h1>
+      <h1 className="text-3xl font-bold text-gray-900">Welcome back!</h1>
       <p className="mt-2 text-gray-600">
         Subscription Plan: <span className="font-semibold text-blue-600">{user.subscription}</span>
       </p>

@@ -1,117 +1,94 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { PayPalButtons, PayPalScriptProvider } from '@paypal/react-paypal-js';
-import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
 interface PayPalSubscribeButtonProps {
-  planName: string;
+  userId: string;
+  planId: string;
 }
 
-export default function PayPalSubscribeButton({ planName }: PayPalSubscribeButtonProps) {
-  const [loading, setLoading] = useState(true);
-  const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
+export default function PayPalSubscribeButton({ userId, planId }: PayPalSubscribeButtonProps) {
+  const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  const supabase = createClient();
 
-  // 1. Fetch Subscription ID from our Backend on mount
-  useEffect(() => {
-    const initSubscription = async () => {
-      try {
-        // Get current session token
-        const { data: sessionData } = await supabase.auth.getSession();
-        const session = sessionData?.session;
-        
-        if (!session) {
-          setError('You must be logged in to subscribe.');
-          setLoading(false);
-          return;
-        }
-
-        const res = await fetch('/api/paypal/create-subscription', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-        });
-
-        const result = await res.json();
-
-        if (!res.ok) throw new Error(result.error || 'Failed to init');
-
-        setSubscriptionId(result.subscriptionID);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initSubscription();
-  }, []);
-
-  if (loading) return <div className="p-4 text-center text-gray-500">Loading Secure Payment...</div>;
-  if (error) return <div className="p-4 text-center text-red-600 bg-red-50 rounded">{error}</div>;
-  if (!subscriptionId) return null;
+  if (!userId) {
+    return (
+      <div className="p-4 text-center text-red-600 bg-red-50 rounded">
+        Please log in to subscribe.
+      </div>
+    );
+  }
 
   return (
-    <PayPalScriptProvider options={{ 
-      clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID!, 
-      intent: 'subscription',
-      vault: true 
-    }}>
+    <PayPalScriptProvider
+      options={{
+        clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID!,
+        intent: 'subscription',
+        vault: true,
+      }}
+    >
+      {error && (
+        <div className="mb-4 p-3 text-sm text-red-700 bg-red-100 rounded">
+          {error}
+        </div>
+      )}
+
       <PayPalButtons
         style={{
           shape: 'rect',
           color: 'gold',
           layout: 'vertical',
           label: 'subscribe',
-          height: 45,
         }}
+        disabled={isProcessing}
+        
+        // 1. Create the subscription on PayPal's side
         createSubscription={(data, actions) => {
-          // We already have the ID from our backend, just return it
           return actions.subscription.create({
-            plan_id: process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID || '', // Fallback, though backend handled it
+            plan_id: planId,
           });
         }}
-        onApprove={async (approveData, actions) => {
-          // 2. Activate on Backend
-          const { data: sessionData } = await supabase.auth.getSession();
-          const session = sessionData?.session;
-          
-          if (!session?.user?.id) {
-            alert('Session expired. Please login again.');
-            return;
-          }
+
+        // 2. Handle Approval
+        onApprove={async (data, actions) => {
+          setIsProcessing(true);
+          setError(null);
 
           try {
-            const res = await fetch('/api/paypal/activate', {
+            // Send the Subscription ID to OUR backend for verification
+            const response = await fetch('/api/paypal/activate', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                subscriptionID: approveData.subscriptionID,
-                userId: session.user.id,
+                subscriptionID: data.subscriptionID,
+                userId: userId,
               }),
             });
 
-            const result = await res.json();
+            const result = await response.json();
 
-            if (res.ok) {
-              alert(`Success! You are now subscribed to ${planName}.`);
-              router.push('/dashboard?upgrade=success');
-            } else {
-              throw new Error(result.error);
+            if (!response.ok) {
+              throw new Error(result.error || 'Payment verification failed');
             }
+
+            // Success! Redirect to dashboard
+            alert('🎉 Welcome to Pro! Your account has been upgraded.');
+            router.push('/dashboard?upgrade=success');
+            
           } catch (err: any) {
-            alert('Payment verification failed: ' + err.message);
+            console.error(err);
+            setError(err.message);
+          } finally {
+            setIsProcessing(false);
           }
         }}
+
         onError={(err) => {
           console.error('PayPal Error', err);
-          setError('Payment failed. Please try again.');
+          setError('Something went wrong with PayPal. Please try again.');
         }}
       />
     </PayPalScriptProvider>

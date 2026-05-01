@@ -6,47 +6,68 @@ const prisma = new PrismaClient();
 
 export async function POST(req: NextRequest) {
   try {
-    const { subscriptionID, userId } = await req.json();
+    const body = await req.json();
+    const { subscriptionID, userId } = body;
 
     if (!subscriptionID || !userId) {
-      return NextResponse.json({ error: 'Missing data' }, { status: 400 });
-    }
-
-    // 1. Verify Subscription Status with PayPal
-    const client = getPayPalClient();
-    
-    const response = await client.execute({
-      path: `/v1/billing/subscriptions/${subscriptionID}`,
-      method: 'GET',
-    });
-
-    const paypalData = response.result as { status: string };
-    const status = paypalData.status;
-
-    // Only activate if PayPal says it's active or approved
-    if (status !== 'ACTIVE' && status !== 'APPROVED') {
       return NextResponse.json(
-        { error: `Payment status is ${status}, not active.` },
+        { error: 'Missing subscriptionID or userId' },
         { status: 400 }
       );
     }
 
-    // 2. Update Database
-    await prisma.user.update({
+    // 1. Verify with PayPal
+    const client = getPayPalClient();
+    
+    let paypalResponse;
+    try {
+      paypalResponse = await client.execute({
+        path: `/v1/billing/subscriptions/${subscriptionID}`,
+        method: 'GET',
+      });
+    } catch (paypalError) {
+      console.error('PayPal verification failed:', paypalError);
+      return NextResponse.json(
+        { error: 'Failed to verify subscription with PayPal' },
+        { status: 502 }
+      );
+    }
+
+    const status = paypalResponse.result.status;
+
+    // 2. Check if status is valid
+    // ACTIVE = paying, APPROVED = approved but start date in future
+    if (status !== 'ACTIVE' && status !== 'APPROVED') {
+      return NextResponse.json(
+        { error: `Subscription status is ${status}, not active.` },
+        { status: 400 }
+      );
+    }
+
+    // 3. Update Database via Prisma
+    const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: {
-        subscription: 'PRO',
+        subscriptionTier: 'PRO', // Matches your Enum
         paypalSubscriptionId: subscriptionID,
         updatedAt: new Date(),
       },
     });
 
-    return NextResponse.json({ success: true, status });
+    return NextResponse.json({
+      success: true,
+      message: 'Subscription activated successfully',
+      status: status,
+      user: {
+        id: updatedUser.id,
+        subscriptionTier: updatedUser.subscriptionTier,
+      },
+    });
 
   } catch (error) {
-    console.error('PayPal Activation Error:', error);
+    console.error('Internal Server Error:', error);
     return NextResponse.json(
-      { error: 'Failed to activate subscription' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

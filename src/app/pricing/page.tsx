@@ -4,9 +4,12 @@ import PayPalSubscribeButton from '@/components/pricing/PayPalSubscribeButton';
 import Link from 'next/link';
 
 export default async function PricingPage() {
-const supabase = await createClient();
-const { data } = await supabase.auth.getSession();
-    const session = data?.session;
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getSession();
+  const session = data?.session;
+
+  // 🔐 PayPal Plan ID from env (only required for Pro Beta)
+  const planId = process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID;
 
   return (
     <div className="min-h-screen bg-gray-50 py-20 px-4">
@@ -28,12 +31,15 @@ const { data } = await supabase.auth.getSession();
               <li>✓ Basic Validation</li>
               <li>✓ Community Support</li>
             </ul>
-            <Link href="/dashboard" className="block w-full text-center bg-gray-100 text-gray-900 font-bold py-3 rounded-lg hover:bg-gray-200 transition">
+            <Link 
+              href="/dashboard" 
+              className="block w-full text-center bg-gray-100 text-gray-900 font-bold py-3 rounded-lg hover:bg-gray-200 transition"
+            >
               Current Plan
             </Link>
           </div>
 
-          {/* Pro Plan */}
+          {/* Pro Plan - MOST POPULAR */}
           <div className="bg-[#0F1F38] text-white p-8 rounded-xl shadow-xl border-2 border-teal-bright relative transform scale-105">
             <div className="absolute top-0 right-0 bg-amber-500 text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg">
               MOST POPULAR
@@ -48,7 +54,16 @@ const { data } = await supabase.auth.getSession();
             </ul>
             
             {session ? (
-              <PayPalSubscribeButton planName="Pro Beta" />
+              planId ? (
+                <PayPalSubscribeButton 
+                  userId={session.user.id} 
+                  planId={planId} 
+                />
+              ) : (
+                <div className="text-center text-amber-300 text-sm py-2">
+                  ⚠️ Subscription config pending
+                </div>
+              )
             ) : (
               <Link 
                 href="/login?redirect=/pricing" 
@@ -68,7 +83,10 @@ const { data } = await supabase.auth.getSession();
               <li>✓ Custom Integrations</li>
               <li>✓ 24/7 Phone Support</li>
             </ul>
-            <a href="mailto:sales@surveyiq.com" className="block w-full text-center bg-navy text-white font-bold py-3 rounded-lg hover:bg-opacity-90 transition">
+            <a 
+              href="mailto:sales@surveyiq.com" 
+              className="block w-full text-center bg-navy text-white font-bold py-3 rounded-lg hover:bg-opacity-90 transition"
+            >
               Contact Sales
             </a>
           </div>
